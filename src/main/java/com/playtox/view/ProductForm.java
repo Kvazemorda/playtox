@@ -14,14 +14,14 @@ import java.util.Date;
 
 @Theme("valo")
 public class ProductForm extends HorizontalLayout implements View {
-    Label labelTitle, labelDescription, labelCost, labelTitleQuantity,  labelQuanity;
-    TextField textFieldQuantityForBuy;
-    Button buttonBuy, buttonEdit, buttonDelete;
-    VerticalLayout verticalForTitleDesc, verticslForCostQuan;
-    ProductEntity productEntity;
-    PurchaseDAO purchaseDAO;
-    UserEntity userEntity;
-    ProductDAO productDAO;
+    private Label labelTitle, labelDescription, labelCost, labelTitleQuantity,  labelQuanity;
+    private TextField textFieldQuantityForBuy;
+    private Button buttonBuy, buttonEdit, buttonDelete;
+    private VerticalLayout verticalForTitleDesc, verticalForCostQuan;
+    private ProductEntity productEntity;
+    private PurchaseDAO purchaseDAO;
+    private UserEntity userEntity;
+    private ProductDAO productDAO;
 
 
     public ProductForm(ProductEntity productEntity, PurchaseDAO purchaseDAO,
@@ -32,13 +32,13 @@ public class ProductForm extends HorizontalLayout implements View {
         this.userEntity = userEntity;
         createForm();
     }
-    private void createForm(){
+    public void createForm(){
         setSpacing(true);
         setMargin(true);
         labelTitle = new Label(productEntity.getName());
         labelDescription = new Label(productEntity.getDescription());
         labelDescription.setWidth("40em");
-        verticalForTitleDesc = new VerticalLayout(labelTitle, labelDescription);
+        verticalForTitleDesc = new VerticalLayout();
 
         labelCost = new Label(productEntity.getCost().toString() + " rub");
         labelTitleQuantity = new Label("quantity:");
@@ -46,12 +46,29 @@ public class ProductForm extends HorizontalLayout implements View {
         textFieldQuantityForBuy = new TextField();
         textFieldQuantityForBuy.setValue("1");
         textFieldQuantityForBuy.setWidth("5em");
-        verticslForCostQuan = new VerticalLayout(labelCost,
-                 new HorizontalLayout(labelTitleQuantity, labelQuanity), textFieldQuantityForBuy, getButtonBuy());
+        verticalForCostQuan = new VerticalLayout();
+        fillLayouts();
         if(userEntity.isAdmin()){
             verticalForTitleDesc.addComponents(getButtonEdit(), getButtonDelete());
         }
-        addComponents(verticalForTitleDesc, verticslForCostQuan);
+        addComponents(verticalForTitleDesc, verticalForCostQuan);
+    }
+
+    public void fillLayouts(){
+        verticalForTitleDesc.addComponents(labelTitle, labelDescription);
+        verticalForCostQuan.addComponents(labelCost,
+                new HorizontalLayout(labelTitleQuantity, labelQuanity),
+                textFieldQuantityForBuy,
+                getButtonBuy());
+    }
+
+    private void clearLayouts(){
+        verticalForTitleDesc.removeAllComponents();
+        verticalForCostQuan.removeAllComponents();
+    }
+
+    private void fillEditsComponents(EditProductForm editProductForm){
+        verticalForTitleDesc.addComponent(editProductForm);
     }
 
 
@@ -72,20 +89,15 @@ public class ProductForm extends HorizontalLayout implements View {
                 Notification.show("In field of quantity is not number");
             }
         });
-
-
         return buttonBuy;
     }
 
     public Button getButtonEdit() {
         buttonEdit = new Button("Edit");
         buttonEdit.addClickListener(e ->{
-            Window window = new Window("Edit product");
-            EditProductForm editProductForm = new EditProductForm(productDAO, userEntity);
-            window.setContent(editProductForm);
-            window.center();
-            
-
+            clearLayouts();
+            EditProductForm editProductForm = new EditProductForm(productDAO, userEntity, productEntity, this);
+            fillEditsComponents(editProductForm);
         });
         return buttonEdit;
     }

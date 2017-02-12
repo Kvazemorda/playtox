@@ -17,20 +17,17 @@ public class UserDAO {
     private static final Logger log = Logger.getLogger(UserDAO.class);
 
     public void saveNewClient(UserEntity userEntity){
-        if(!userIsExist(userEntity.getLogin())){
-            userIsExist();
-        }else {
-            try (Session session = new MySession().getSession()) {
+        try (Session session = new MySession().getSession()) {
                 session.beginTransaction();
                 session.saveOrUpdate(userEntity);
                 session.flush();
                 session.getTransaction().commit();
                 log.info("Добавлен новый пользователь " + userEntity.getLogin());
+                Notification.show("User was saved");
             }catch (Exception exp){
+                exp.printStackTrace();
                 log.error(exp);
-                Notification.show("I can't save you, try again ;-)");
         }
-    }
     }
 
     public UserEntity authorizationUser(String login, String password){
@@ -73,16 +70,22 @@ public class UserDAO {
     }
 
     public boolean userIsExist(String login){
-        try(Session session = new MySession().getSession()){
+        try(Session session = new MySession().getSession()) {
             String hql = "select user from UserEntity user " +
-                    "where user.login = :login" ;
+                    "where user.login = :login";
             Query query = session.createQuery(hql);
             query.setParameter("login", login);
-            if(query.list().size() > 0){
+            if (query.list().size() > 0) {
+                System.out.println(false);
                 return false;
-            }else{
+            } else {
+                System.out.println(true);
                 return true;
             }
+        }catch (Exception e){
+            log.error(e);
+            e.printStackTrace();
+            return false;
         }
     }
 

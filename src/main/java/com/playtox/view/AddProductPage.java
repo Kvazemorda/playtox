@@ -70,7 +70,7 @@ public class AddProductPage extends VerticalLayout implements View {
         tfQuantity.clear();
     }
 
-    private boolean formsIsNotNull(){
+    protected boolean formsIsNotNull(){
         if(tfName.getValue() != null
                 && tfDescription != null
                 && tfCost.getValue() != null

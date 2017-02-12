@@ -3,18 +3,18 @@ package com.playtox.dao;
 import com.playtox.entity.ProductEntity;
 import com.playtox.entity.UserEntity;
 import com.playtox.service.MySession;
-import com.vaadin.spring.annotation.SpringComponent;
-import com.vaadin.spring.annotation.UIScope;
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 
-@SpringComponent
-@UIScope
+@Service
 public class ProductDAO implements CRUD {
-    private static final Logger log = Logger.getLogger(ProductEntity.class);
+    @Autowired
+    private static final Logger log = Logger.getLogger(ProductDAO.class);
 
     @Override
     public void create(Object object) {
@@ -27,6 +27,7 @@ public class ProductDAO implements CRUD {
             session.getTransaction().commit();
             log.info("Добавлен новый товар, ID:" + productEntity.getId() + " Name:" + productEntity.getName());
         }catch (Exception e){
+            e.printStackTrace();
             log.error(e);
         }finally {
             session.clear();
@@ -39,11 +40,13 @@ public class ProductDAO implements CRUD {
     public HashSet<ProductEntity> getAllObjects() {
 
         try(Session session = new MySession().getSession()){
-            String hql = "select product from ProductEntity product";
+            String hql = "select product from ProductEntity product " +
+                    "where product.isDelete = false";
             Query query = session.createQuery(hql);
             return new HashSet<>(query.list());
 
         }catch (Exception exp){
+            exp.printStackTrace();
             log.error(exp);
             return new HashSet<>();
         }
@@ -53,22 +56,18 @@ public class ProductDAO implements CRUD {
     @Override
     public void update(Object object, UserEntity userEntity) {
         ProductEntity productEntity = (ProductEntity) object;
-        Session session = new MySession().getSession();
-        try{
+        try (Session session = new MySession().getSession()) {
             session.beginTransaction();
-            session.merge(object);
+            session.update(object);
             session.flush();
             session.getTransaction().commit();
-            log.info(userEntity.getLogin()
+           log.info(userEntity.getLogin()
                     + " Изменил товар, ID:" + productEntity.getId()
                     + " Name:" + productEntity.getName());
-        }catch (Exception e){
+        } catch (Exception e) {
+            e.printStackTrace();
             log.error(e);
-        }finally {
-            session.clear();
-            session.close();
         }
-
     }
 
     @Override
@@ -77,31 +76,32 @@ public class ProductDAO implements CRUD {
         Session session = new MySession().getSession();
         try{
             session.beginTransaction();
-            session.merge(object);
+            session.persist(object);
             session.getTransaction().commit();
             log.info("Товар куплен, ID:" + productEntity.getId()
                     + " Name:" + productEntity.getName());
         }catch (Exception exp){
+            exp.printStackTrace();
             log.error(exp);
         }finally {
             session.clear();
             session.close();
         }
-
-
     }
 
     @Override
     public void delete(Object object) {
         ProductEntity productEntity = (ProductEntity) object;
+        productEntity.setDelete(true);
         Session session = new MySession().getSession();
         try{
             session.beginTransaction();
-            session.delete(productEntity);
+            session.merge(productEntity);
             session.getTransaction().commit();
             log.info("Товар удален, ID:" + productEntity.getId()
                     + " Name:" + productEntity.getName());
         }catch (Exception exp){
+            exp.printStackTrace();
             log.error(exp);
         }finally {
             session.clear();

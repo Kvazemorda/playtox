@@ -11,6 +11,7 @@ public class ProductEntity {
     @Column String description;
     @Column BigDecimal cost;
     @Column int quantity;
+    @Column boolean isDelete;
 
     public ProductEntity() {
     }
@@ -20,6 +21,7 @@ public class ProductEntity {
         this.description = description;
         this.cost = cost;
         this.quantity = quantity;
+        isDelete = false;
     }
 
     public long getId() {
@@ -60,6 +62,14 @@ public class ProductEntity {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public boolean isDelete() {
+        return isDelete;
+    }
+
+    public void setDelete(boolean delete) {
+        this.isDelete = delete;
     }
 
     @Override
