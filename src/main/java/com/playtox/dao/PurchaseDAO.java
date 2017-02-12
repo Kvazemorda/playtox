@@ -7,9 +7,11 @@ import com.playtox.service.MySession;
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 
+@Service
 public class PurchaseDAO implements CRUD<PurchaseEntity>{
     private static final Logger log = Logger.getLogger(PurchaseEntity.class);
 
@@ -21,21 +23,33 @@ public class PurchaseDAO implements CRUD<PurchaseEntity>{
         productDAO.update(productEntity);
 
         Session session = new MySession().getSession();
-        session.beginTransaction();
-        session.saveOrUpdate(object);
-        session.flush();
-        session.getTransaction().commit();
-        log.info("Добавлена покупка, ID:" + object.getId()
-                + " UserID: " + object.getUserEntity().getId()
-                + " UserName: " + object.getUserEntity().getLogin());
+        try{
+            session.beginTransaction();
+            session.saveOrUpdate(object);
+            session.getTransaction().commit();
+            log.info("Добавлена покупка, ID:" + object.getId()
+                    + " UserID: " + object.getUserEntity().getId()
+                    + " UserName: " + object.getUserEntity().getLogin());
+        }catch (Exception exp){
+            log.error(exp);
+        }finally {
+            session.clear();
+            session.close();
+        }
+
     }
 
     @Override
     public HashSet<PurchaseEntity> getAllObjects() {
-        String hql = "select purchase from PurchaseEntity purchase";
-        Query query = new MySession().getSession().createQuery(hql);
-
-        return new HashSet<>(query.list());
+        try(Session session = new MySession().getSession()){
+            String hql = "select purchase from PurchaseEntity purchase";
+            Query query = session.createQuery(hql);
+            return new HashSet<>(query.list());
+        }catch (Exception ex){
+            ex.printStackTrace();
+            log.error(ex);
+            return new HashSet<>();
+        }
     }
 
     @Override

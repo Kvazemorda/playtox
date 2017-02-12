@@ -3,13 +3,15 @@ package com.playtox.dao;
 import com.playtox.entity.UserEntity;
 import com.playtox.exeption.UserIsExist;
 import com.playtox.service.MySession;
+import com.vaadin.ui.Notification;
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 
-
+@Service
 public class UserDAO {
 
     private static final Logger log = Logger.getLogger(UserDAO.class);
@@ -18,36 +20,50 @@ public class UserDAO {
         if(!userIsExist(userEntity.getLogin())){
             userIsExist();
         }else {
-            Session session = new MySession().getSession();
-            session.beginTransaction();
-            session.saveOrUpdate(userEntity);
-            session.flush();
-            session.getTransaction().commit();
-            log.info("Добавлен новый пользователь " + userEntity.getLogin());
+            try (Session session = new MySession().getSession()) {
+                session.beginTransaction();
+                session.saveOrUpdate(userEntity);
+                session.flush();
+                session.getTransaction().commit();
+                log.info("Добавлен новый пользователь " + userEntity.getLogin());
+            }catch (Exception exp){
+                log.error(exp);
+                Notification.show("I can't save you, try again ;-)");
         }
     }
+    }
 
-    public boolean authorizationUser(String login, String password){
-        String passwordEncrypt = encryption(password);
+    public UserEntity authorizationUser(String login, String password){
+        try{
+        Session session = new MySession().getSession();
+            String passwordEncrypt = encryption(password);
 
-        String hql = "select user from UserEntity user " +
-                "where user.login = :login " +
-                "and user.password = :password";
-        Query query = new MySession().getSession().createQuery(hql);
-        query.setParameter("password", passwordEncrypt);
-        query.setParameter("login", login);
-        if(query.list().size() > 0){
-            return true;
-        }else {
-            return false;
+            String hql = "select user from UserEntity user " +
+                    "where user.login = :login " +
+                    "and user.password = :password";
+            Query query = session.createQuery(hql);
+            query.setParameter("password", passwordEncrypt);
+            query.setParameter("login", login);
+            if(query.list().size() > 0){
+                return (UserEntity) query.list().get(0);
+            }else {
+                return null;
+            }
+        }catch (Exception exp){
+            exp.printStackTrace();
+            log.error(exp);
+            return null;
         }
     }
 
     public HashSet<UserEntity> getAllObjects() {
-        String hql = "select user from UserEntity user";
-        Query query = new MySession().getSession().createQuery(hql);
-
-        return new HashSet<>(query.list());
+        try(Session session = new MySession().getSession()){
+            String hql = "select user from UserEntity user";
+            Query query = session.createQuery(hql);
+            return new HashSet<>(query.list());
+        }catch (Exception exp){
+            return new HashSet<>();
+        }
     }
 
 
@@ -57,14 +73,16 @@ public class UserDAO {
     }
 
     public boolean userIsExist(String login){
-        String hql = "select user from UserEntity user " +
-                "where user.login = :login" ;
-        Query query = new MySession().getSession().createQuery(hql);
-        query.setParameter("login", login);
-        if(query.list().size() > 0){
-            return false;
-        }else{
-            return true;
+        try(Session session = new MySession().getSession()){
+            String hql = "select user from UserEntity user " +
+                    "where user.login = :login" ;
+            Query query = session.createQuery(hql);
+            query.setParameter("login", login);
+            if(query.list().size() > 0){
+                return false;
+            }else{
+                return true;
+            }
         }
     }
 
